@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pitchPractice</title>
+    <style>
+        * {
+            text-align: center;
+            font-family: Courier;
+            user-select: none;
+        }
+        body {
+            background-color: aliceblue;
+        }
+        button {
+            border: none;
+            background-color: #999;
+            font-size: x-large;
+        }
+        button:hover {
+            background-color: #777;
+        }
+        .start {
+            font-size: xx-large;
+        }
+    </style>
+    <script src="http://unpkg.com/tone"></script>
+    <script>
+        let times = [];
+        let gamesPlayed = 0;
+        let correctPlayed = 0;
+        let incorrectPlayed = 0;
+
+        const synthA = new Tone.Synth().toDestination();
+        let notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        let octaves = [3, 4, 5];
+        let accidentals = ["", "#"/*,"b"*/];
+        let randomNote;
+        let userInput = false;
+        let gameStarted = false;
+        let startTime;
+
+        window.onload = () => {
+            for (let note in notes) {
+                console.log(notes[note]);
+                let button = document.createElement("button");
+                button.innerText = notes[note];
+                button.setAttribute("onclick", "userClicked('" + notes[note] + "')");
+                document.getElementById("buttons").appendChild(button);
+            }
+        }
+
+        let averageTimes = (times) => {
+            let total = 0;
+            for(let i = 0; i < times.length; i++) total += times[i];
+            return (total / times.length);
+        }
+
+        async function startGame() {
+            document.getElementById("startBtn").setAttribute("hidden",true);
+            document.getElementById("buttons").removeAttribute("hidden");
+            gameStarted = true;
+            let totalNotes = notes.length * accidentals.length;
+            randomNote = notes[Math.floor(Math.random() * notes.length)];
+            console.log("[LOG] computer picked note " + randomNote);
+            synthA.triggerAttackRelease(randomNote + octaves[Math.floor(Math.random() * octaves.length)], "4n");
+            startTime = Date.now();
+        }
+
+        let userClicked = (note) => {
+            console.log("[LOG] user picked note " + note);
+            if (!gameStarted) {
+                synthA.triggerAttackRelease(note + "4", "4n");
+                return;
+            }
+            gamesPlayed += 1;
+            let time = Date.now() - startTime;
+            if (note == randomNote) {
+                correctPlayed += 1;
+                document.getElementById("totalTime").innerText = "took " + time.toString() + "ms";
+                document.getElementById("feedback").innerText = "CORRECT";
+                times.push(time);
+                document.getElementById("averageTime").innerText = "average: " + Math.round(averageTimes(times)) + "ms";
+            }
+            else {
+                incorrectPlayed += 1;
+                document.getElementById("totalTime").innerText = "the correct answer was " + randomNote;
+                document.getElementById("feedback").innerText = "INCORRECT";
+            }
+            document.getElementById("accuracy").innerText = "accuracy: " + Math.round((correctPlayed / gamesPlayed) * 100) + "%";
+            return startGame();
+        }
+    </script>
+</head>
+
+<body>
+    <h1 id="feedback"></h1>
+    <h2 id="totalTime"></h2>
+    <h3 id="averageTime"></h3>
+    <h3 id="accuracy"></h3>
+    <button id="startBtn" class="button start" onclick="startGame()">Start</button>
+    <div hidden id="buttons"></div>
+</body>
+
+</html>
